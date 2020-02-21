@@ -1,16 +1,9 @@
 #include "Checkfile.h"
 #include "Configuration.h"
 
+#include <QTextStream>
 #include <QFileInfo>
-#include <QTimer>
-#include <QDebug>
-#include <QThread>
-#include <iostream>
-#include <QFuture>
-
-#include <future>
 #include <thread>
-#include <chrono>
 
 CheckFile::CheckFile(QObject *parent) :
     QObject(parent)
@@ -23,174 +16,215 @@ CheckFile::CheckFile(QObject *parent) :
         QString("help")
     };
 
-    timer = new QTimer;
 
-    connect(timer, &QTimer::timeout, this, &CheckFile::inputCommand);
+    connect(this, &CheckFile::fileAdded, [&](const QString& fileName)
+    {
+        QTextStream cout(stdout);
+        cout << '\t' << fileName << " was added to list" << endl;
+        fileNames.push_back(fileName);
+    });
 
-    timer->start(100);
+    connect(this, &CheckFile::fileRemoved, [&](const qint32& index)
+    {
+        QTextStream cout(stdout);
+        cout << '\t' << fileNames[index] << " was removed from list" << endl;
+        fileNames.remove(index);
+    });
 
-
-
-    //std::thread newThread(&inputCommand);
-    //newThread.detach();
+    connect(this, &CheckFile::enteredSize, [&](const qint32& index)
+    {
+        QTextStream cout(stdout);
+        cout << '\t' << fileNames[index] << " size is equal " << QFileInfo(fileNames[index]).size() << " byte" << endl;
+    });
 }
 
 CheckFile::~CheckFile()
 {
-    delete timer;
+    // empty
 }
 
-QVector<QFileInfo> CheckFile::getFiles() const
+void CheckFile::startTerminalThread()
 {
-    return files;
+    std::thread inputTerminalThread(&CheckFile::terminal, this);
+
+    inputTerminalThread.detach();
 }
 
-void CheckFile::inputCommand()
+void CheckFile::startCheckPropertiesThread()
 {
-    QTextStream cin(stdin);
+    std::thread checkPropertiesThread(&CheckFile::checkProperties, this);
 
-    QString command;
+    checkPropertiesThread.detach();
+}
 
-    while (command.isEmpty())
-      {
-          std::cout << Configuration::MessageInputTheCommand.toStdString();
-          command = cin.readLine();
+void CheckFile::terminal()
+{
+    QTextStream cin(stdin), cout(stdout);
 
-          command = command.toLower();
+    auto printListFiles = [&](){
 
-          if (std::find(commands.begin(), commands.end(), command) == commands.end())
-              command.clear();
-      }
+        qint32 iter = 0;
 
-      // command == 'add'
-      if (command.toLower() == commands[0])
-      {
-          QString fileName;
+        foreach (const auto& fileName, fileNames)
+        {
+            cout << '\t' << ++iter << " ---> " << fileName << endl;
+        }
+    };
 
-          while (fileName.isEmpty())
-          {
-              std::cout << Configuration::MessageAdd.toStdString();
-              fileName = cin.readLine();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-              if (!QFileInfo(fileName).exists() || !QFileInfo(fileName).isFile())
-                  fileName.clear();
-          }
+    forever
+    {
+        QString command;
 
-          files.push_back(QFileInfo(fileName));
+        bool isCommand = false;
 
-          //emit fileAppeared(QFileInfo(fileName));
-      }
+        while (!isCommand)
+        {
+            cout << Configuration::MessageInputTheCommand << flush;
+            command = cin.readLine().trimmed().toLower();
+            std::find(commands.begin(), commands.end(), command) != commands.end() ? isCommand = true : isCommand = false;
+        }
 
-      // command == 'remove'
-      if (command.toLower() == commands[1])
-      {
-          if (files.empty())
-          {
-              std::cout << Configuration::MessageEmptyList.toStdString() << std::endl;
-              return;
-          }
+        // command == 'add'
+        if (command == commands[0])
+        {
+            QString pathToFile;
 
-          std::cout << Configuration::MessageRemove.toStdString() << std::endl;
+            bool isAdd = false;
 
-          qint32 counter = 0;
+            while (!isAdd)
+            {
+                cout << Configuration::MessageAdd << flush;
+                pathToFile = cin.readLine().trimmed();
+                QFileInfo(pathToFile).exists() && QFileInfo(pathToFile).isFile() ? isAdd = true : isAdd = false;
+            }
 
-          for (const auto& file : files)
-          {
-              std::cout << "\t\t" << ++counter << " ---> " << file.fileName().toStdString() << std::endl;
-          }
+            emit fileAdded(pathToFile);
 
-          qint32 rem = -1;
+            continue;
+        }
 
-          forever
-          {
-              std::cout << Configuration::MessageInputNumber.toStdString();
+        // command == 'remove'
+        if (command == commands[1])
+        {
+            if (!fileNames.isEmpty())
+            {
+                cout << Configuration::MessageRemove << endl;
+                printListFiles();
 
-              rem = cin.readLine().toInt();
+                qint32 number = 0;
 
-              if (rem >= 0 && rem <= files.size())
-              {
-                  files.remove(--rem);
-                  std::cout << Configuration::MessageAfterRemove.toStdString() << std::endl;
-                  break;
-              }
-              else
-              {
-                  std::cout << Configuration::MessageFixProblem.toStdString() << std::endl;
-              }
-          }
-      }
+                bool isRemove = false;
 
-      // command = 'size'
-      if (command.toLower() == commands[2])
-      {
-          if (files.empty())
-          {
-              std::cout << Configuration::MessageEmptyList.toStdString() << std::endl;
-              return;
-          }
+                while (!isRemove)
+                {
+                    cout << Configuration::MessageInputNumber << flush;
+                    number = cin.readLine().toInt();
 
-          std::cout << Configuration::MessageSize.toStdString() << std::endl;
+                    if (number <= fileNames.size())
+                    {
+                        emit fileRemoved(--number);
+                        isRemove = true;
+                    }
+                    else
+                    {
+                        cout << Configuration::MessageFixProblem << endl;
+                    }
+                }
+            }
+            else
+            {
+                cout << Configuration::MessageEmptyList << endl;
+            }
 
-          qint32 counter = 0;
+            continue;
+        }
 
-          for (const auto& file : files)
-          {
-              std::cout << "\t" << ++counter << " ---> " << file.fileName().toStdString() << std::endl;
-          }
+        // command == 'size'
+        if (command == commands[2])
+        {
+            if (!fileNames.isEmpty())
+            {
+                cout << Configuration::MessageSize << endl;
+                printListFiles();
 
-          qint32 index = -1;
+                qint32 number = 0;
 
-          forever
-          {
-              std::cout << Configuration::MessageInputNumber.toStdString();
+                bool isSize = false;
 
-              index = cin.readLine().toInt();
+                while (!isSize)
+                {
+                    cout << Configuration::MessageInputNumber << flush;
+                    number = cin.readLine().toInt();
 
-              if (--index >= 0 && index <= files.size() && QFileInfo(files[index]).exists())
-              {
-                  std::cout << "\tThe size if equal " <<  QFileInfo(files[index]).size() << " byte" << std::endl;
-                  break;
-              }
-              else
-              {
-                  std::cout << Configuration::MessageFixProblem.toStdString() << std::endl;
-              }
-          }
-      }
+                    if (number <= fileNames.size())
+                    {
+                        emit enteredSize(--number);
+                        isSize = true;
+                    }
+                }
+            }
+            else
+            {
+                cout << Configuration::MessageEmptyList << endl;
+            }
 
-      // command == 'list'
-      if (command.toLower() == commands[3])
-      {
-          if (files.empty())
-          {
-              std::cout << Configuration::MessageEmptyList.toStdString() << std::endl;
-              return;
-          }
+            continue;
+        }
 
-          std::cout << Configuration::MessageList.toStdString() << std::endl;
+        // command == 'list'
+        if (command == commands[3])
+        {
+            if (!fileNames.isEmpty())
+            {
+                cout << Configuration::MessageList << endl;
+                printListFiles();
+            }
+            else
+            {
+                cout << Configuration::MessageEmptyList << endl;
+            }
 
-          qint32 counter = 0;
+            continue;
+        }
 
-          for (const auto& file : files)
-          {
-              std::cout << "\t" << ++counter << " ---> " << file.fileName().toStdString() << std::endl;
-          }
-      }
+        // command == 'help'
+        if (command == commands[4])
+        {
+            QStringList help = Configuration::MessageHelp.split('\n');
 
-      // command == 'help'
-      if (command.toLower() == commands[4])
-      {
-          QStringList list = Configuration::MessageHelp.split('\n');
+            foreach (const auto& it, help)
+            {
+                cout << '\t' << it << endl;
+            }
 
-          if (!list.isEmpty())
-          {
-              for (const auto& it : list)
-              {
-                  std::cout << "\t" << it.toStdString() << std::endl;
-              }
-          }
-      }
+            continue;
+        }
 
-      std::cout << std::endl;
+    }
+}
+
+void CheckFile::checkProperties()
+{
+    forever
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        if (!fileNames.isEmpty())
+        {
+            for (const auto& fileName : fileNames)
+            {
+                if (!QFileInfo(fileName).exists())
+                {
+                    QTextStream cout(stdout);
+                    cout << "\n\t" << fileName << " was removed from list" << endl;
+
+                    if (std::find(fileNames.begin(), fileNames.end(), fileName) != fileNames.end())
+                        fileNames.erase(std::find(fileNames.begin(), fileNames.end(), fileName));
+                }
+            }
+        }
+    }
 }
 

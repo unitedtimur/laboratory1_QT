@@ -2,9 +2,6 @@
 #define CHECKFILE_H
 
 #include <QObject>
-#include <QFileInfo>
-#include <QThread>
-#include <thread>
 
 class CheckFile : public QObject
 {
@@ -13,23 +10,21 @@ public:
     explicit CheckFile(QObject *parent = nullptr);
     ~CheckFile();
 
-    QVector<QFileInfo> getFiles() const;
+    void startTerminalThread();
+    void startCheckPropertiesThread();
 
 signals:
-    void fileDisappeared(const QFileInfo& index);
-    void fileAppeared(const QFileInfo& file);
-    void addedFile();
-    void commandEntered();
+    void fileAdded(const QString& fileName);
+    void fileRemoved(const qint32& index);
+    void enteredSize(const qint32& index);
 
-public slots:
-    void inputCommand();
+private slots:
+    void terminal();
+    void checkProperties();
 
 private:
-    QVector<QString>    commands;
-    QVector<QFileInfo>  files;
-    CheckFile*          ptr;
-    class QTimer*       timer;
+    QVector<QString> commands;
+    QVector<QString> fileNames;
 };
-
 
 #endif // CHECKFILE_H
