@@ -4,7 +4,6 @@
 #include "Checkfile.h"
 #include "Configuration.h"
 
-#include <QThread>
 #include <thread>
 
 int main(int argc, char *argv[])
