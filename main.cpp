@@ -2,7 +2,6 @@
 #include <QDebug>
 
 #include "Checkfile.h"
-#include "FileExists.h"
 #include "Configuration.h"
 
 #include <QThread>
@@ -13,8 +12,9 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     CheckFile checkFile;
-    FileExists exists(&checkFile);
-    //std::thread newThread(checkFile.inputCommand);
+
+    checkFile.startTerminalThread();
+    checkFile.startCheckPropertiesThread();
 
     return a.exec();
 }

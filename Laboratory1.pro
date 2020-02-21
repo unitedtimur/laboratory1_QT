@@ -16,7 +16,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         Checkfile.cpp \
-        FileExists.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -26,5 +25,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     Checkfile.h \
-    Configuration.h \
-    FileExists.h
+    Configuration.h
