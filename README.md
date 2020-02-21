@@ -1,0 +1,1 @@
+// Laboratory1 QT byUnitedTimur (c)
