@@ -323,6 +323,7 @@ void CheckFile::checkProperties()
                 {
                     isDelete = true;
                     cout << endl;
+                    emit fileRemoved(iter);
                 }
                 ++iter;
             }
