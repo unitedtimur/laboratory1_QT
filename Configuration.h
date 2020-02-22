@@ -5,6 +5,7 @@
 
 namespace Configuration
 {
+    static const QString        Copyright              = "Console File Manager Application\n(c) UnitedTimurCompany 2020. All rights reserved\n";
     static const QString        MessageInputTheCommand = "Please, input your command: ";
     static const QString        MessageAdd             = "Specify the path to the file: ";
     static const QString        MessageRemove          = "Which file do you want to delete from tracking?";

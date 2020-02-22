@@ -8,10 +8,12 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
+    QTextStream(stdout) << Configuration::Copyright << endl;
+
     CheckFile checkFile;
 
-    checkFile.startCheckPropertiesThread();
     checkFile.startTerminalThread();
+    checkFile.startCheckPropertiesThread();
 
     return a.exec();
 }
