@@ -87,10 +87,10 @@ void CheckFile::terminal()
         }
     };
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     forever
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         QString command;
 
         bool isCommand = false;
