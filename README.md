@@ -1,5 +1,4 @@
-# Laboratory1 (Console File Manager) byUnitedTimur (c)
-
+# Laboratory1 byUnitedTimur (c)
 💾📄💻Console File Manager Application
 
 ![](demonstration.gif)
