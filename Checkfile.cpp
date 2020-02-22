@@ -16,7 +16,8 @@ CheckFile::CheckFile(QObject *parent) :
         QString("size"),
         QString("list"),
         QString("help"),
-        QString("clear")
+        QString("clear"),
+        QString("remall")
     };
 
     connect(&fileSystemWatcher, &QFileSystemWatcher::fileChanged, [&](const QString& fileName)
@@ -223,7 +224,7 @@ void CheckFile::terminal()
                     cout << Configuration::MessageInputNumber << flush;
                     number = cin.readLine().toInt();
 
-                    if (number <= fileNames.size())
+                    if (number > 0 && number <= fileNames.size())
                     {
                         emit enteredSize(--number);
                         isSize = true;
@@ -280,6 +281,13 @@ void CheckFile::terminal()
 
             continue;
         }
+
+        // command == 'remAll'
+        if (command == commands[6])
+        {
+           fileNames.clear();
+           QTextStream(stdout) << "\tAll files was removed!" << endl;
+        }
     }
 }
 
@@ -302,7 +310,6 @@ void CheckFile::checkProperties()
                 {
                     isDelete = true;
                     cout << endl;
-                    emit fileRemoved(iter);
                 }
                 ++iter;
             }
