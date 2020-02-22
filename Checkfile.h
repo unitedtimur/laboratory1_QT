@@ -2,6 +2,7 @@
 #define CHECKFILE_H
 
 #include <QObject>
+#include <QFileSystemWatcher>
 
 class CheckFile : public QObject
 {
@@ -23,8 +24,9 @@ private slots:
     void checkProperties();
 
 private:
-    QVector<QString> commands;
-    QVector<QString> fileNames;
+    QVector<QString>    commands;
+    QVector<QString>    fileNames;
+    QFileSystemWatcher  fileSystemWatcher;
 };
 
 #endif // CHECKFILE_H

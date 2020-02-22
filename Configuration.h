@@ -9,7 +9,7 @@ namespace Configuration
     static const QString        MessageAdd             = "Specify the path to the file: ";
     static const QString        MessageRemove          = "Which file do you want to delete from tracking?";
     static const QString        MessageInputNumber     = "Input number: ";
-    static const QString        MessageHelp            = "Add - add your file\nRemove - remove from tracking\nSize - to know the size of file\nList - to show list of files";
+    static const QString        MessageHelp            = "Add - add your file\nRemove - remove from tracking\nSize - to know the size of file\nList - to show list of files\nClear - clear console";
     static const QString        MessageSize            = "Which file do you want to know the size?";
     static const QString        MessageList            = "The list of files: ";
     static const QString        MessageEmptyList       = "List of files is empty\n";
