@@ -87,10 +87,10 @@ void CheckFile::terminal()
         }
     };
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     forever
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         QString command;
 
         bool isCommand = false;
@@ -292,7 +292,7 @@ void CheckFile::terminal()
                     emit fileRemoved(i - 1);
                 }
 
-                QTextStream(stdout) << "\tAll files was removed!" << endl;
+                QTextStream(stdout) << "\tAll files have been removed!" << endl;
             }
             else
             {
