@@ -7,6 +7,11 @@
 
 #include <thread>
 
+#ifdef Q_OS_WIN32
+    #include <windows.h>
+    static HANDLE hConsole;
+#endif
+
 CheckFile::CheckFile(QObject *parent) :
     QObject(parent)
 {
@@ -24,33 +29,61 @@ CheckFile::CheckFile(QObject *parent) :
     {
        if (QFileInfo(fileName).exists())
        {
-            QTextStream cout(stdout);
-            cout << flush << "\n\t" << fileName << " was changed!" << endl;
-            cout << "\tSize is " << QFileInfo(fileName).size() << " byte" << endl;
-            cout << Configuration::MessageInputTheCommand;
+           #ifdef Q_OS_WIN32
+               hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+               SetConsoleTextAttribute(hConsole, 6);
+               QTextStream(stdout) << "\n\t" << fileName << " was changed!\n\tSize is " << QFileInfo(fileName).size() << " byte" << endl;
+               SetConsoleTextAttribute(hConsole, 7);
+           #elif
+               QTextStream(stdout) << "\n\t" << fileName << " was changed!\n\tSize is " << QFileInfo(fileName).size() << " byte" << endl;
+           #endif
+           //QTextStream cout(stdout);
+           //cout << flush << "\n\t" << fileName << " was changed!" << endl;
+           //cout << "\tSize is " << QFileInfo(fileName).size() << " byte" << endl;
+           QTextStream(stdout) << Configuration::MessageInputTheCommand;
        }
     });
 
     connect(this, &CheckFile::fileAdded, [&](const QString& fileName)
     {
-        QTextStream cout(stdout);
-        cout << flush << '\t' << fileName << " was added to list" << endl;
+        #ifdef Q_OS_WIN32
+            hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, 2);
+            QTextStream(stdout) << '\t' << fileName << " was added to list" << endl;
+            SetConsoleTextAttribute(hConsole, 7);
+        #elif
+            QTextStream(stdout) << '\t' << fileName << " was added to list" << endl;
+        #endif
+
         fileSystemWatcher.addPath(fileName);
         fileNames.push_back(fileName);
     });
 
     connect(this, &CheckFile::fileRemoved, [&](const qint32& index)
     {
-        QTextStream cout(stdout);
-        cout << flush << '\t' << fileNames[index] << " was removed from list" << endl;
+        #ifdef Q_OS_WIN32
+            hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, 4);
+            QTextStream(stdout) << '\t' << fileNames[index] << " was removed from list" << endl;
+            SetConsoleTextAttribute(hConsole, 7);
+        #elif
+            QTextStream(stdout) << '\t' << fileNames[index] << " was removed from list" << endl;
+        #endif
+
         fileSystemWatcher.removePath(fileNames[index]);
         fileNames.remove(index);
     });
 
     connect(this, &CheckFile::enteredSize, [&](const qint32& index)
     {
-        QTextStream cout(stdout);
-        cout << flush << '\t' << fileNames[index] << " size is equal " << QFileInfo(fileNames[index]).size() << " byte" << endl;
+        #ifdef Q_OS_WIN32
+            hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleTextAttribute(hConsole, 2);
+            QTextStream(stdout)<< '\t' << fileNames[index] << " size is equal " << QFileInfo(fileNames[index]).size() << " byte" << endl;
+            SetConsoleTextAttribute(hConsole, 7);
+        #elif
+            QTextStream(stdout)<< '\t' << fileNames[index] << " size is equal " << QFileInfo(fileNames[index]).size() << " byte" << endl;
+        #endif
     });
 }
 
@@ -83,6 +116,7 @@ void CheckFile::terminal()
 
         foreach (const auto& fileName, fileNames)
         {
+
             cout << '\t' << ++iter << " ---> " << fileName << endl;
         }
     };
