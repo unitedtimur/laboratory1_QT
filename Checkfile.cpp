@@ -285,8 +285,21 @@ void CheckFile::terminal()
         // command == 'remAll'
         if (command == commands[6])
         {
-           fileNames.clear();
-           QTextStream(stdout) << "\tAll files was removed!" << endl;
+            if (!fileNames.isEmpty())
+            {
+                for (qint32 i = fileNames.size(); i > 0; --i)
+                {
+                    emit fileRemoved(i - 1);
+                }
+
+                QTextStream(stdout) << "\tAll files was removed!" << endl;
+            }
+            else
+            {
+                cout << flush << '\t' << Configuration::MessageEmptyList << endl;
+            }
+
+            continue;
         }
     }
 }
